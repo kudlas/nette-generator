@@ -3,14 +3,11 @@
 	"require": {
 		"php": ">=5.4.0",
 		"kdyby/doctrine": "~2.0",
-		"kdyby/translation": "@dev",
-		"kdyby/forms-replicator": "dev-master"
+		"kdyby/translation": "@dev"
 	},
 	"require-dev": {
 		"php": ">=5.4.0",
 		"kdyby/doctrine": "~2.0",
-		"kdyby/translation": "@dev",
-		"kdyby/forms-replicator": "dev-master"
-	},
-	"minimum-stability": "dev"
+		"kdyby/translation": "@dev"
+	}
 }
