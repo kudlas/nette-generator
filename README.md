@@ -26,6 +26,7 @@ Usage:
 --------------
 - Create new Nette Framework 2.2.X project using Composer: `composer create-project nette/sandbox my-project`
 - Add latest Nette CRUD generator using Composer: `composer require r-bruha/nette-generator @dev`
+- Add latest [Kdyby\Replicator](https://github.com/Kdyby/Replicator) using Composer: `composer require kdyby/forms-replicator 1.2.*@dev`
 - Open Nette Framework `config.neon` and add these new things:
 - Add standard database configuration:
 ```
