@@ -1,0 +1,44 @@
+{syntax double}{block title}{_generator.template.{{lcfirst($table->sanitizedName)}}.list.title}{/block}
+	{block table}
+	<form l:name='control' role='form'>
+		<div l:inner-foreach="$form['where']->controls as $input" class='where'>
+			{input $input}{if $input->name === 'remove'}<br/>{/if}
+		</div>
+		<div l:inner-foreach="$form['order']->controls as $input" class='order'>
+			{input $input}{if $input->name === 'remove'}<br/>{/if}
+		</div>
+		<div l:inner-foreach="$form['limit']->controls as $input" class='limit'>
+			{input $input}{if $input->name === 'remove'}<br/>{/if}
+		</div>
+		{input submit}
+	</form>
+	<table l:snippet='table' class='table table-striped'>
+		<thead l:translator='generator.template.{{lcfirst($table->sanitizedName)}}.list.table.head'>
+			<tr>
+				<th n:foreach='$table->columns as $column'>{_{{$column->name}}}</th>
+				<th><a class='btn btn-xs btn-success' l:href='change 0, $target, link => $presenter->storeRequest()' l:translator='generator.common.component.control'>{_add}</a></th>
+			</tr>
+		</thead>
+		<tbody l:if='count($items)' l:translator='generator.common.component.control'>
+			<tr l:foreach='$items as $i'>
+				<td n:foreach='$table->columns as $column'>{{if $column->key instanceof \Bruha\Utils\Object\Key\Foreign}}{$i->{{$column->key->table}} ? $i->{{$column->key->table}}->{{$column->key->value}} : $i->{{$column->name}}{{else}}{$i->{{$column->name}}{{if in_array($column->type->name, ['date', 'time', 'datetime', 'timestamp'], TRUE)}}{{if $column->nullable}} ? $i->{{$column->name}}->format('{{else}}->format('{{/if}}{{/if}}{{if in_array($column->type->name, ['date', 'datetime', 'timestamp'], TRUE)}}d. m. Y{{elseif $column->type->name === ['time', 'datetime', 'timestamp']}}H:i:s{{/if}}{{if in_array($column->type->name, ['date', 'time', 'datetime', 'timestamp'], TRUE)}}{{if $column->nullable}}') : $i->{{$column->name}}{{else}}'){{/if}}{{/if}}{{/if}}}</td>
+				<td l:if='!$target'>
+					<a class='btn btn-xs btn-warning' l:href='change $i->{{$primaryKey|noescape}}, $target, link => $presenter->storeRequest()'>{_change}</a>
+					<a class='ajax btn btn-xs btn-danger' l:href='delete! $i->{{$primaryKey|noescape}}, link => $presenter->storeRequest()' data-confirm='{_confirm}'>{_delete}</a>
+				</td>
+				<td l:if='$target'><a href='#' class='btn btn-xs btn-success' onClick='$("#frm-change-{$target|noescape}", window.opener.document).val({$i->{{$primaryKey|noescape}}}); window.close();'>{_choose}</a></td>
+			</tr>
+		</tbody>
+		<tfoot l:if='count($items)'>
+			<tr>
+				<td class='text-center' colspan='3'>
+					<ul l:snippet='pagination' class='pagination pagination-sm'>
+						<li><a class='ajax' l:href="list $where, $order, ['lim' => $limit['lim'], 'off' => 0]">{_generator.common.component.page.first}</a></li>
+						<li l:class="$i === ($limit['off'] + $limit['lim']) / $limit['lim'] ? active" l:for="$i = $limit['off'] / $limit['lim'] + 1 - $pageLimit <= 1 ? 1 : $limit['off'] / $limit['lim'] + 1 - $pageLimit; $i <= ($limit['off'] / $limit['lim'] + 1 + $pageLimit <= $pages ? $limit['off'] / $limit['lim'] + 1 + $pageLimit : $pages); $i++"><a class='ajax' l:href="list  $where, $order, ['lim' => $limit['lim'], 'off' => ($i - 1) * $limit['lim']]">{$i}</a></li>
+						<li><a class='ajax' l:href="list $where, $order, ['lim' => $limit['lim'], 'off' => ($pages - 1) * $limit['lim']]">{_generator.common.component.page.last}</a></li>
+					</ul>
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+	{/block}

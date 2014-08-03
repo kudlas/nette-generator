@@ -1,0 +1,28 @@
+{syntax double}protected function createComponentControl() {
+		$form = new Form();
+		$form->setTranslator($this->translator);
+        $search = $form->addDynamic('where', function (\Nette\Forms\Container $container) {
+			$container->addSelect('col', NULL, {{$columns|noescape}});
+			$container->addSelect('mod', NULL, $this->whereOperators);
+			$container->addText('val');
+            $container->addSubmit('remove', '✘')->addRemoveOnClick();
+			if (isset($this->where[$this->dynamicWhereCounter])) $container->setDefaults($this->where[$this->dynamicWhereCounter++]);
+        }, count($this->where));
+        $search->addSubmit('add', '✚')->addCreateOnClick();
+		
+		$sort = $form->addDynamic('order', function (\Nette\Forms\Container $container) {
+			$container->addSelect('col', NULL, {{$columns|noescape}});
+			$container->addSelect('mod', NULL, ['DESC' => 'Sestupně', 'ASC' => 'Vzestupně']);
+            $container->addSubmit('remove', '✘')->addRemoveOnClick(); 
+			if (isset($this->order[$this->dynamicOrderCounter])) $container->setDefaults($this->order[$this->dynamicOrderCounter++]);
+        }, count($this->order));
+        $sort->addSubmit('add', '✚')->addCreateOnClick();
+		
+		$limit = $form->addContainer('limit');
+			$limit->addText('lim');
+			$limit->addHidden('off', ($this->limit['lim'] - 1) * $this->itemsPerPage);
+		$limit->setDefaults($this->limit);
+		$form->addSubmit('submit', 'generator.common.component.control.control');
+        $form->onSuccess[] = $this->controlSubmit;
+        return $form;
+	}

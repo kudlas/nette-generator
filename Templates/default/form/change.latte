@@ -1,0 +1,12 @@
+{syntax double}protected function createComponentChange() {
+		$form = new Form();
+		$form->setTranslator($this->translator);
+		$form->addHidden('primaryKey', $this->primaryKey);
+		{{foreach $inputs as $input}}
+		$form{{$input|noescape}}
+		{{/foreach}}
+		$form->addSubmit('send', 'generator.common.component.control.save');
+		$form->onSuccess[] = $this->changeSubmit;
+		if ($this->primaryKey) $form->setDefaults($this->repository->get($this->primaryKey) ?: []);    
+		return $form;
+	}

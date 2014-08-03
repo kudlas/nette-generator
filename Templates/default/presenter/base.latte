@@ -1,0 +1,91 @@
+{syntax double}{{$phpTag|noescape}} namespace App{{$moduleName}}\Presenters;
+use \Nette\Application\UI\Form;
+
+abstract class BasePresenter extends \Nette\Application\UI\Presenter {
+	/** @var \Kdyby\Translation\Translator @inject */
+	public $translator;
+	/** @var \App{{$moduleName}}\Models\CustomRepository @inject */
+	public $repository;
+	/** @persistent */
+	public $link;
+	/** @persistent */
+	public $locale;
+	
+	protected $whereOperators = [
+		'<' => '<',
+		'<=' => '<=',
+		'=' => '=',
+		'!=' => '!=',
+		'>=' => '>=',
+		'>' => '>',
+		'BETWEEN' => 'BETWEEN',
+		'LIKE' => 'LIKE %...%',
+		'IN' => 'IN',
+		'NOT IN' => 'NOT IN',
+		'IS NULL' => 'IS NULL',
+		'IS NOT NULL' => 'IS NOT NULL'
+	];
+	
+	protected $itemsPerPage = 10;
+	protected $pageLimit = 5;
+	protected $dynamicWhereCounter = 0;
+	protected $dynamicOrderCounter = 0;
+	protected $primaryKey, $where, $order, $limit, $target = [];
+	
+	public function startup() {
+		parent::startup();
+		$this->repository->setTable(implode('_', array_map('lcfirst', array_slice(preg_split('~(?=[A-Z])~', str_replace([__NAMESPACE__, '\\', 'Presenter'], '', get_called_class())), 1))));
+		$this->template->itemsPerPage = $this->itemsPerPage;
+		$this->template->pageLimit = $this->pageLimit;
+	}
+	
+	public function actionList(array $where, array $order, array $limit, $target) {
+		$this->template->where = $this->where = $where;
+		$this->template->order = $this->order = $order;
+		$this->template->limit = $this->limit = $limit ? $limit : ['lim' => $this->itemsPerPage, 'off' => 0];
+		$this->template->target = $target ?: FALSE;
+	}
+
+	public function renderList(array $where, array $order, array $limit, $target) {
+		$this->template->items = $this->repository->getAll($this->where, $this->order, $this->limit);
+		$this->template->pages = $this->repository->getPages($this->where, $this->limit);
+		if (!count($this->template->items)) empty($this->where) ? $this->flashMessage($this->translator->translate('generator.common.component.presenter.exist'), 'warning') : $this->flashMessage($this->translator->translate('generator.common.component.presenter.found') ,'warning');
+	}
+
+	public function renderChange($id, $target) {
+		$this->primaryKey = $id;
+	}
+	
+	public function controlSubmit(Form $form) {
+		$this->redirect('this', $form->values->where, $form->values->order, ['lim' => $form->values->limit['lim'], 'off' => 0]);
+	}
+
+
+	public function changeSubmit(Form $form) {
+		try {
+			$this->repository->save($form->values->primaryKey, array_slice($form->getValues(TRUE), 1));
+			$this->flashMessage($this->translator->translate('generator.common.component.presenter.change.success'), 'success');
+		} catch(\PDOException $e) {
+			if ((int)$e->errorInfo[1] === 1062) {
+				$keyInfo = explode(' for key ', str_replace("'", '', \Nette\Utils\Strings::match($e->getMessage(), "~'(.*)'~")[0]));
+				$this->flashMessage($this->translator->translate('generator.common.component.presenter.change.unique', NULL, [$keyInfo[1], $keyInfo[0]]), 'danger');
+			} else $this->flashMessage($this->translator->translate('generator.common.component.presenter.change.other', NULL, [$e->getMessage()]), 'danger');
+		}
+		$this->restoreRequest($this->link);
+	}
+
+	public function handleDelete($id) {
+		try {
+			$this->repository->remove($id);
+			$this->flashMessage($this->translator->translate('generator.common.component.presenter.delete.success'), 'success');
+		} catch (\PDOException $e) {
+			if ((int)$e->errorInfo[1] === 1451) {
+				$key = substr($e->getMessage(), ($start = mb_strpos($e->getMessage(), 'CONSTRAINT `') + 12), mb_strpos($e->getMessage(), '`', $start) - $start);
+				$table = substr($e->getMessage(), ($start = mb_strpos($e->getMessage(), '`.`') + 3), mb_strpos($e->getMessage(), '`,', $start) - $start);
+				$column = substr($e->getMessage(), ($start = mb_strpos($e->getMessage(), 'FOREIGN KEY (`') + 14), mb_strpos($e->getMessage(), '`)', $start) - $start);
+				$this->flashMessage($this->translator->translate('generator.common.component.presenter.delete.foreign', NULL, [$key, $table, $column]), 'danger');
+			} else $this->flashMessage($this->translator->translate('generator.common.component.presenter.delete.other', NULL, [$e->getMessage()]), 'danger');
+		}
+		!$this->ajax ? $this->restoreRequest($this->link) : $this->redrawControl();
+	}
+}
