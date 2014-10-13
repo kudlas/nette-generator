@@ -4,7 +4,7 @@
  * @author Radek Brůha
  * @version 1.0
  */
-class Entity extends Base {
+class EntityBuilder extends BaseBuilder {
 	/**
 	 * Build and save Doctrine2 entities from database
 	 * @param \stdClass $settings
@@ -41,20 +41,8 @@ class Entity extends Base {
 		
 		foreach (\Bruha\Utils\File::getDirectoryFiles($directory) as $file) {
 			$content = str_replace('<?php', '<?php namespace Kdyby\Doctrine;', \Bruha\Utils\File::read("$directory/$file"));
-			/* OLD CODE
-				$lastVariablePosition = mb_strrpos($content, 'private ');
-				$i = 0;
-				$newVariables = [];
-				while ($i < $lastVariablePosition) {
-					$start = strpos($content, 'private ', $i) + 9;
-					$end = strpos($content, ';', $start);
-					$name = substr($content, $start, $end - $start);
-					$trueName = substr($name, 0, strpos($name, ' '));
-					$newVariables[] = empty($trueName) ? $name : $trueName;
-					$i = $end;
-				}
-			*/
 			preg_match_all('~private \$(.*);~', $content, $matches);
+			foreach ($matches[1] as $key => $value) if(($posisiton = mb_strpos($value, ' ')) !== FALSE) $matches[1][$key] = mb_substr($value, 0, $posisiton);
 			$oldVariables = $newVariables = $matches[1];
 			foreach ($oldVariables as $key => $value) {
 				$newVariables[$key] = $newValue = implode('_', array_map('lcfirst', preg_split('~(?=[A-Z])~', $value)));

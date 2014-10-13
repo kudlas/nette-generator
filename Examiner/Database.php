@@ -5,11 +5,11 @@
  * @version 1.0
  */
 class Database {
-	/** @var \Utils\Database */
+	/** @var \Utils\DatabaseConnection */
 	private $database;
 
-	/** @param \Utils\Database $database */
-	public function __construct(\Bruha\Utils\Database $database) {
+	/** @param \Utils\DatabaseConnection $database */
+	public function __construct(\Bruha\Utils\DatabaseConnection $database) {
 		$this->database = $database;
 	}
 

@@ -4,7 +4,7 @@
  * @author Radek Brůha
  * @version 1.0
  */
-class Translate extends Base {
+class Translate extends BaseBuilder {
 	/**
 	 * Build and save application translate
 	 * @param array $tables
@@ -14,9 +14,11 @@ class Translate extends Base {
 		foreach ($tables as $t) {
 			$translate = [];
 			foreach ($t->columns as $c) $translate[$c->name] = $c->comment ?: $c->name;
-			$translateListTemplate[lcfirst($t->sanitizedName)] = ['list' => ['table' => ['head' => $translate], 'title' => $t->comment ?: $t->name]];
+			$translateListTemplate[lcfirst($t->sanitizedName)] = ['list' => ['table' => ['head' => $translate], 'title' => $t->comment ?: $t->name],
+				'change' => ['title' => '{0} Add new ' . lcfirst($t->comment ?: $t->name) . ' |[1,+Inf] Edit ' . lcfirst($t->comment ?: $t->name)]];
 			$translatePresenterComponentChange[lcfirst($t->sanitizedName)] = ['component' => ['change' => $translate]];
 		}
+
 		$translate = ['presenter' => $translatePresenterComponentChange,
 			'template' => $translateListTemplate,
 			'common' => [
@@ -26,7 +28,7 @@ class Translate extends Base {
 						'found' => "We're sorry, but there are no items to show! Try remove your search options!",
 						'change' => [
 							'success' => 'Congratulation, item was succesfully saved.',
-							'unique' => "We're sorry, but item couldn't be saved because of duplicity data %1% in unique key %0%.",
+							'unique' => "We're sorry, but item couldn't be saved because of duplication data %1% in unique key %0%.",
 							'other' => "We're sorry, but item couldn't be saved because of an error: %0%"
 						],
 						'delete' => [
@@ -47,7 +49,37 @@ class Translate extends Base {
 						'confirm' => 'Do you really want to delete this item?',
 						'table' => 'Choose item from table',
 						'save' => 'Save and item',
-						'control' => 'Change filter and order'
+						'control' => 'Change filter and order',
+						'submit' => 'Apply filtres and sorting',
+						'where' => [
+							'col' => 'Choose column',
+							'mod' => 'Choose condition type',
+							'val' => 'Add condition data',
+							'add' => 'Add new filter line',
+							'remove' => 'X',
+							'operator' => [
+								'less' => 'is less than',
+								'lessEqual' => 'is less than or equal to',
+								'equal' => 'is equal to',
+								'notEqual' => 'is not equal to',
+								'greaterEqual' => 'is greater than or equal to',
+								'greater' => 'is greater than',
+								'like' => 'contains',
+								'notLike' => 'not contains',
+								'null' => 'is not filled',
+								'notNull' => 'is filled'
+							]
+						],
+						'order' => [
+							'col' => 'Choose column',
+							'mod' => 'Choose condition type',
+							'add' => 'Add new order line',
+							'remove' => 'X',
+							'operator' => [
+								'desc' => 'from the greatest to the least',
+								'asc' => 'from the least to the greatest'
+							]
+						]
 					],
 					'validator' => [
 						'fill' => 'Sorry, this field must be filled!',

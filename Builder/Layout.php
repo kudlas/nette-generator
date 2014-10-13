@@ -4,7 +4,7 @@
  * @author Radek Brůha
  * @version 1.0
  */
-class Layout extends Base {
+class Layout extends BaseBuilder {
 	/**
 	 * Build and save layout template
 	 * @param array of \Utils\Object\Table $tables

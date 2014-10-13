@@ -1,8 +1,8 @@
-select { padding: 3.5px; }
-div.where, div.order, div.limit { float: left; width: 400px; }
-div.where input[type=submit], div.order input[type=submit], div.limit input[type=submit] { padding: 1px; }
+form#frm-control div { display: block; margin-bottom: 1em; }
+form#frm-control div input, form#frm-control div select { width: 25%; margin: 0 1em 0.25em 0; }
+form#frm-control div input[type=submit] { width: auto; }
 
-#ajax-worker { width: 128px; height: 128px; position: fixed; top:0; bottom: 0; left: 0; right: 0; margin: auto; background: url('../images/loading.gif') center center no-repeat; z-index: 999; }
+.ajax-loading { width: 128px; height: 128px; position: fixed; top:0; bottom: 0; left: 0; right: 0; margin: auto; background: url('../images/loading.gif') center center no-repeat; z-index: 999; }
 /* jQuery FancyBox 2.1.5 */
 .fancybox-wrap, .fancybox-skin, .fancybox-outer, .fancybox-inner, .fancybox-image, .fancybox-wrap iframe, .fancybox-wrap object, .fancybox-nav, .fancybox-nav span, .fancybox-tmp { padding: 0; margin: 0; border: 0; outline: none; vertical-align: top; }
 .fancybox-wrap { position: absolute; top: 0; left: 0; z-index: 8020; }

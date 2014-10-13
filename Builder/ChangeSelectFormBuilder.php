@@ -1,55 +1,66 @@
 <?php namespace Bruha\Builder;
 /**
- * Change form building class
+ * Change table form building class
  * @author Radek Brůha
  * @version 1.0
  */
-class ChangeForm extends Base {
+class ChangeSelectFormBuilder extends BaseBuilder {
 	/**
-	 * Build and save add & edit form
+	 * Build and save change table form
 	 * @param \Bruha\Utils\Object\Table $table
 	 * @param array of \Utils\Object\Column $columns
 	 * @param \stdClass $settings
 	 * @return string Builded form
 	 */
 	public function build(\Bruha\Utils\Object\Table $table, \stdClass $settings) {
-		$this->sourcePath = "/../Templates/$settings->templateName/form/change.latte";
-		foreach ($table->columns as $column) {
-			if ($column->key instanceof \Bruha\Utils\Object\Key\Primary) {
-				$this->params['primaryKey'] = $column->name;
-				if (strpos($column->extra, 'auto_increment') !== FALSE) continue;
+		$this->sourcePath = "/../Templates/$settings->templateName/form/changeSelect.latte";
+		foreach ($table->columns as $c) {
+			$skip = FALSE;
+			foreach ($c->keys as $k) if ($k instanceof \Bruha\Utils\Object\Key\PrimaryKey) {
+				$this->params['primaryKey'] = $c->name;
+				if (mb_strpos($c->extra, 'auto_increment') !== FALSE) $skip = TRUE;
 			}
-			$this->params['inputs'][] = $this->generateInputTypes($table, $column) .
-				$this->generateHTML5Validations($column) .
-				$this->generatePlaceholders($table, $column) .
-				$this->generateRequiredValidations($column) .
-				$this->generateRangeValidations($column) .
-				$this->generateMaxLengthValidations($column) . ';';
+			if ($skip) continue;
+			$this->params['inputs'][] = $this->generateInputTypes($table, $c) .
+				$this->generateHTML5Validations($c) .
+				$this->generatePlaceholders($table, $c) .
+				$this->generateRequiredValidations($c) .
+				$this->generateRangeValidations($c) .
+				$this->generateMaxLengthValidations($c) . ';';
 		}
 		return $this->buildTemplate();
 	}
 
 	/**
-	 * @param \Utils\Object\Column $column Column
-	 * @return string Input type
+	 * Gets input type
+	 * @param \Bruha\Utils\Object\Table $table
+	 * @param \Bruha\Utils\Object\Column $column
+	 * @return string
 	 */
 	private function generateInputTypes(\Bruha\Utils\Object\Table $table, \Bruha\Utils\Object\Column $column) {
-		$name = 'generator.presenter.' . lcfirst($table->sanitizedName) . ".component.change.$column->name";
+		$name = '$this->translator->translate(\'generator.presenter.' . lcfirst($table->sanitizedName) . ".component.change.$column->name')";
 		if (in_array($column->type->name, ['boolean', 'enum', 'set'])) {
-			return "->addSelect('$column->name', '$name', {$this->generateEnumSetValues($column)})";
-		} else if ($column->key instanceof \Bruha\Utils\Object\Key\Foreign) {
-			$table = implode('', array_map(function($value) {
-					return ucfirst($value);
-				}, explode('_', $column->key->table)));
-			return "->addText('$column->name', '$name')->setAttribute('readonly', 'readonly')->setAttribute('data-table-target', '$table:list')";
+			return "->addSelect('$column->name', $name, {$this->generateEnumSetValues($column)})";
 		} else if (in_array($column->type->name, ['text', 'mediumtext', 'longtext', 'blob', 'mediumblob', 'longblob'])) {
-			return "->addTextArea('$column->name', '$name')";
-		} else return "->addText('$column->name', '$name')";
+			return "->addTextArea('$column->name', $name)";
+		} else {
+			foreach ($column->keys as $k) if ($k instanceof \Bruha\Utils\Object\Key\ForeignKey) {
+				$columns = "'CONCAT_WS(\' - \', ";
+				foreach ($k->table->columns as $c) {
+					foreach ($c->keys as $kk) if ($kk instanceof \Bruha\Utils\Object\Key\PrimaryKey) $primaryKey = "'{$k->table->name}.{$c->name}' => 'key',";
+					$columns .= "{$k->table->name}.{$c->name}, ";
+				}
+				$columns = str_replace(', "', ")' => 'value'", $columns . '"');
+				return "->addSelect('$column->name', $name, array_reduce(\$this->" . lcfirst($k->table->sanitizedName) . "Repository->getAll(NULL, NULL, NULL, [$primaryKey $columns]), function (\$last, \$current) { \$last[\$current['key']] = \$current['value']; return \$last; }))->setAttribute('data-live-search', 'true')";
+			}
+			return "->addText('$column->name', $name)";
+		}
 	}
 
 	/**
+	 * Gets input ENUM, SET and BOOLean values
 	 * @param \Utils\Object\Column $column Column
-	 * @return string Input values for BOOLean & ENUM & SET column types
+	 * @return string
 	 */
 	private function generateEnumSetValues(\Bruha\Utils\Object\Column $column) {
 		if ($column->type->name === 'boolean') {
@@ -64,11 +75,13 @@ class ChangeForm extends Base {
 	}
 
 	/**
+	 * Gets input HTML5 type
 	 * @param \Utils\Object\Column $column Column
-	 * @return string Input HTML5 type
+	 * @return string
 	 */
 	private function generateHTML5Validations(\Bruha\Utils\Object\Column $column) {
-		if (!(in_array($column->type->name, ['boolean', 'enum', 'set'], TRUE) || ($column->key instanceof \Bruha\Utils\Object\Key\Foreign))) {
+	//	if (!(in_array($column->type->name, ['boolean', 'enum', 'set'], TRUE) || ($column->key instanceof \Bruha\Utils\Object\Key\ForeignKey))) {
+		if (in_array($column->type->name, ['boolean', 'enum', 'set'], TRUE)) {
 			if (in_array($column->type->name, ['tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'year'])) {
 				return "->setType('number')";
 			} elseif ($column->type->name === 'date') {
@@ -82,33 +95,46 @@ class ChangeForm extends Base {
 	}
 
 	/**
+	 * Gets input placeholder
 	 * @param \Bruha\Utils\Object\Table $table
 	 * @param \Utils\Object\Column $column Column
 	 * @return string Input placeholder
 	 */
 	private function generatePlaceholders(\Bruha\Utils\Object\Table $table, \Bruha\Utils\Object\Column $column) {
 		$name = 'generator.presenter.' . lcfirst($table->sanitizedName) . ".component.change.$column->name";
-		return "->setAttribute('placeholder', '$name')";
+		return "->setAttribute('placeholder', \$this->translator->translate('$name'))";
 	}
 
 	/**
+	 * Gets input require validation
 	 * @param \Utils\Object\Column $column Column
-	 * @return string Input required validation
+	 * @return string
 	 */
 	private function generateRequiredValidations(\Bruha\Utils\Object\Column $column) {
-		if (!$column->nullable && ($column->extra !== 'on update CURRENT_TIMESTAMP' && ($column->key instanceof \Bruha\Utils\Object\Key\Primary || $column->extra !== 'auto_increment'))) return "->addRule(Form::FILLED, 'generator.common.component.validator.fill')";
+		if (!$column->nullable && $column->extra !== 'on update CURRENT_TIMESTAMP') {
+			foreach ($column->keys as $k) {
+				if ($k instanceof \Bruha\Utils\Object\Key\PrimaryKey && $column->extra !== 'auto_increment')  {
+					return "->addRule(Form::FILLED, \$this->translator->translate('generator.common.component.validator.fill'))";
+				}
+			}
+		}		
 	}
 
 	/**
+	 * Gets input range validation
 	 * @param \Utils\Object\Column $column Column
-	 * @return string Input range validation
+	 * @return string
 	 */
 	private function generateRangeValidations(\Bruha\Utils\Object\Column $column) {
 		$range = NULL;
-		if ($column->nullable || $column->extra === 'on update CURRENT_TIMESTAMP' || ($column->key instanceof \Bruha\Utils\Object\Key\Primary && $column->extra === 'auto_increment')) $range = '->addCondition(Form::FILLED)';
-		//	if (!$column->key instanceof \Bruha\Utils\Object\Key\Foreign) {
+		if ($column->nullable || $column->extra === 'on update CURRENT_TIMESTAMP') $range = '->addCondition(Form::FILLED)';
+		foreach ($column->keys as $k) {
+			if ($k instanceof \Bruha\Utils\Object\Key\PrimaryKey && $column->extra === 'auto_increment')  {
+				$range = '->addCondition(Form::FILLED)';
+			} else if ($k instanceof \Bruha\Utils\Object\Key\ForeignKey) return $range;
+		}
 		if (in_array($column->type->name, ['tinyint', 'smallint', 'mediumint', 'int', 'bigint'])) {
-			$range .= "->addRule(Form::INTEGER, 'generator.common.component.validator.integer')";
+			$range .= "->addRule(Form::INTEGER, \$this->translator->translate('generator.common.component.validator.integer'))";
 			switch ($column->type->name) {
 				case 'tinyint': return ($range .= $column->type->extra ? "->addRule(Form::RANGE, \$this->translator->translate('generator.common.component.validator.range', NULL, [0, 255]), [0, 255])" : "->addRule(Form::RANGE, \$this->translator->translate('generator.common.component.validator.range', NULL, [-128, 127]), [-128, 127])");
 				case 'smallint': return ($range .= $column->type->extra ? "->addRule(Form::RANGE, \$this->translator->translate('generator.common.component.validator.range', NULL, [0, 65535]), [0, 65535])" : "->addRule(Form::RANGE, \$this->translator->translate('generator.common.component.validator.range', NULL, [-32768, 32767]), [-32768, 32767])");
@@ -117,14 +143,14 @@ class ChangeForm extends Base {
 				case 'bigint': return ($range .= $column->type->extra ? "->addRule(Form::RANGE, \$this->translator->translate('generator.common.component.validator.range', NULL, [0, 18446744073709551615]), [0, 18446744073709551615])" : "->addRule(Form::RANGE, \$this->translator->translate('generator.common.component.validator.range', NULL, [-9223372036854775808, 9223372036854775807]), [-9223372036854775808, 9223372036854775807])");
 				case 'year': return ($range .= (int)$column->type->length === 4 ? "->addRule(Form::RANGE, \$this->translator->translate('generator.common.component.validator.range', NULL, [1901, 2155]), [1901, 2155])" : "->addRule(Form::RANGE, \$this->translator->translate('generator.common.component.validator.range', NULL, [0, 99]), [0, 99])");
 			}
-		} else if (in_array($column->type->name, ['float', 'double', 'decimal'])) return ($range .= "->addRule(Form::FLOAT, 'generator.common.component.validator.float')");
-		//	}
+		} else if (in_array($column->type->name, ['float', 'double', 'decimal'])) return ($range .= "->addRule(Form::FLOAT, \$this->translator->translate('generator.common.component.validator.float'))");
 		return $range;
 	}
 
 	/**
+	 * Gets input maximum length validation
 	 * @param \Utils\Object\Column $column Column
-	 * @return string Input max legth validation
+	 * @return string
 	 */
 	private function generateMaxLengthValidations(\Bruha\Utils\Object\Column $column) {
 		switch ($column->type->name) {

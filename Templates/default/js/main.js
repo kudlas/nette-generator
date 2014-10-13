@@ -1,27 +1,19 @@
 $(document).ready(function() {
-	//$.nette.init();
-	$.nette.ext({
-		start: function() { this.spinner = $('<div>', {id: 'ajax-worker', css: {display: 'none'}}).appendTo('body').show(0); },
-		before: function(xhr, settings) {
-			if (!settings.nette) return;
-			var question = settings.nette.el.data('confirm');
-			if (question) return confirm(question);
-		},
-		complete: function() { this.spinner.hide(0); }
+	$.nette.ext('all', {
+		init: function() { this.spinner = this.createSpinner(); this.spinner.appendTo('html'); },
+		before: function(xhr, settings) { if (!settings.nette) return; var question = settings.nette.el.data('confirm'); if (question) return confirm(question); },
+		start: function() {  this.spinner.show(0); },
+		complete: function() {
+			this.spinner.hide(0);
+			$('form#frm-control div.where input[formnovalidate]:not(:last)').after('<br/>');
+			$('form#frm-control div.order input[formnovalidate]:not(:last)').after('<br/>');
+		} }, {
+		createSpinner: function() { return $('<div>', { class: 'ajax-loading', css: { display: 'none' } }); }
 	});
+	$.nette.init();
 	
-	$('a.modal-window').fancybox({
-		padding: 10,
-		minWidth: '500px',
-		maxWidth: '75%',
-		maxHeight: '75%',
-		openEffect: 'none',
-		closeEffect: 'none',
-		closeClick: false,
-		beforeShow: function() { $('div.modal-window').find('form').each(function() { window.Nette.initForm(this); }); },
-		afterShow: function() { $('div.modal-window input:enabled:visible:first').focus(); },
-		helpers: {title: {type: 'inside'}, overlay: {closeClick: false, css: {'background': 'rgba(0, 0, 0, .75)'}}}
-	});
+	$('form#frm-control').on('keydown', function(e) { if (e.which === 13) { e.preventDefault(); $('input#frm-control-submit').click(); } });
+	$('div.modal-window input:not([readonly]):enabled:visible:first').focus();
 
 	$.fn.datetimepicker.defaults = {
 		pickDate: true,

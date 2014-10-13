@@ -4,31 +4,25 @@
  * @author Radek Brůha
  * @version 1.0
  */
-class Database extends \MySQLi {
-
+class DatabaseConnection extends \PDO {
+	public $database;
 	/**
 	 * Database connect
-	 * @param string $hostname MySQL host
-	 * @param string $username MySQL username
-	 * @param string $password MySQL password
-	 * @param string $database MySQL database
+	 * @param string $hostname Hostname
+	 * @param string $username Username
+	 * @param string $password Password
+	 * @param string $database Database
 	 * @throws \DatabaseException
 	 */
 	public function __construct($hostname, $username, $password, $database) {
-		parent::__construct($hostname, $username, $password, $database);
-		if ($this->connect_error) throw new \DatabaseException("[$this->connect_errno] $this->connect_error");
+		parent::__construct("mysql:dbname=$database;host=$hostname", $username, $password, NULL);
+	//	$this->database = $database;
+		
+	//	if ($this->connect_error) throw new \DatabaseException("[$this->connect_errno] $this->connect_error");
 	}
 
-	/**
-	 * Execute SQL query with exception handling
-	 * @param string $query SQL query
-	 * @return MySQLi_result
-	 * @throws \DatabaseException
-	 */
 	public function query($query) {
-		$result = parent::query($query);
-		if ($this->error) throw new \DatabaseException("[$this->errno] $this->error");
-		return $result;
+		return parent::query($query);
 	}
 
 	/**

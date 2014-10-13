@@ -1,6 +1,6 @@
-{syntax double}
+{syntax double}{block title}{_generator.template.{{lcfirst($table->sanitizedName)}}.change.title, $primaryKey}{/block}
 <div class='modal-window' l:block='table'>
-	<form class='ajax' role='form' l:name='change' l:inner-foreach='$form->controls as $input'>
+	<form l:name='change{{$chooser}}' l:inner-foreach='$form->controls as $input' role='form' >
 		<div l:if='!$input instanceof \Nette\Forms\Controls\HiddenField' class='form-group'>
 			{label $input->name}{/label}
 			{if $input instanceof \Nette\Forms\Controls\SubmitButton}
@@ -28,9 +28,8 @@
 			{/if}
 		</div>
 	</form>
-	<script type='text/javascript'>
-		$('.input-group.date.date-full').datetimepicker();
-		$('.input-group.date.date-only').datetimepicker({ pickTime: false });
-		$('.input-group.date.time-only').datetimepicker({ pickDate: false });
+	<script type='text/javascript' l:block='jsControl'>
+		$('select').selectpicker();
+		$('select').ajaxSelectPicker();
 	</script>
 </div>

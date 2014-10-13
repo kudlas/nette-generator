@@ -2,22 +2,22 @@
 /**
  * Store table column structure information
  * @author Radek Brůha
- * @version 1.1
+ * @version 1.0
  */
 class Column {
 	public $name;
 	public $type;
 	public $nullable;
-	public $key;
+	public $keys;
 	public $default;
 	public $extra;
 	public $comment;
 
-	public function __construct($name = FALSE, $type = FALSE, $nullable = FALSE, $key = FALSE, $default = FALSE, $extra = FALSE, $comment = FALSE) {
+	public function __construct($name = NULL, $type = NULL, $nullable = NULL, array $keys = [], $default = NULL, $extra = NULL, $comment = NULL) {
 		$this->name = $name;
 		$this->type = $type;
 		$this->nullable = $nullable;
-		$this->key = $key;
+		$this->keys = $keys;
 		$this->default = $default;
 		$this->extra = $extra;
 		$this->comment = $comment;

@@ -8,83 +8,108 @@ class BaseRepository extends \Nette\Object {
 	/** @var string */
 	protected $className, $fullClassName;
 
-	public function __construct(\Kdyby\Doctrine\EntityManager $entityManager) {
+	public function __construct($tableName, \Kdyby\Doctrine\EntityManager $entityManager) {
 		$this->entityManager = $entityManager;
-	}
-
-	public function setTable($table) {
-		$this->className = implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $table)));
+		$this->className = implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $tableName)));
 		$this->fullClassName = "\Kdyby\Doctrine\\$this->className";
 		$this->dataAccessObject = $this->entityManager->getDao("\Kdyby\Doctrine\\$this->className");
 	}
 	
-	public function getAll(array $where, array $order, array $limit) {
+	/**
+	 * Return table rows
+	 * @param array $where
+	 * @param array $order
+	 * @param array $limit
+	 * @param array $what
+	 * @return array
+	 */
+	public function getAll(array $where = NULL, array $order = NULL, array $limit = NULL, array $what = NULL) {
 		$table = $this->dataAccessObject->createQueryBuilder()->select($this->className)->from($this->fullClassName, $this->className);
+		if (!empty($what)) {
+			$old = mb_substr(key($what), 0,  mb_strpos(key($what), '.'));
+			$sql = '';
+			foreach ($what as $k => $v) $sql .= str_replace($old, $this->className, str_replace('_id', '', $k)) . " AS $v, ";
+			$table->add('select', new \Doctrine\ORM\Query\Expr\Select(mb_substr($sql, 0, -2)));
+		}
+		
 		$i = 0;
 		if (!empty($where)) foreach ($where as $w) if ($w['val'] !== '') {
-			if (count($joinTable = explode('.', $w['col'])) === 2) {
-				$column = $joinTable[1];
-				$table->leftJoin("$this->className.$joinTable[0]", $joinTable = (implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $joinTable[0])))));
+			$joinTable = explode('.', $w['col']);
+			$joinTableColumn = $joinTable[1];
+			$joinTable = $joinTable[0];
+			$joinTableSanitized = implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $joinTable)));
+			if ($joinTableSanitized !== $this->className) {
+				$table->leftJoin("$this->className.$joinTable", $joinTableSanitized);
 				switch ($w['mod']) {
-					case 'BETWEEN': $table->where($table->expr()->between("$joinTable.$column", explode(' ', $w['val'])[0], explode(' ', $w['val'])[1])); break;
-					case 'LIKE': $table->where($table->expr()->like("$joinTable.$column", "?$i"))->setParameter($i++, "%{$w['val']}%"); break;
-					case 'IN': $table->where($table->expr()->in("$joinTable.$column",  explode(';', $w['val']))); break;
-					case 'NOT IN': $table->where($table->expr()->notIn("$joinTable.$column",  explode(';', $w['val']))); break;
-					case 'IS NULL': $table->where($table->expr()->isNull("$joinTable.$column")); break;
-					case 'IS NOT NULL': $table->where($table->expr()->isNotNull("$joinTable.$column")); break;
-					default: $table->where("$joinTable.$column {$w['mod']} ?$i")->setParameter($i++, $w['val']); break;
+					case 'IS NULL': $table->andWhere($table->expr()->isNull("$joinTableSanitized.$joinTableColumn")); break;
+					case 'IS NOT NULL': $table->andWhere($table->expr()->isNotNull("$joinTableSanitized.$joinTableColumn")); break;
+					default: $table->andWhere("$joinTableSanitized.$joinTableColumn {$w['mod']} ?$i")->setParameter($i++, in_array($w['mod'], ['LIKE', 'NOT LIKE']) ? "%{$w['val']}%" : $w['val']); break;
 				}
 			} else {
-					switch ($w['mod']) {
-					case 'BETWEEN': $table->where($table->expr()->between("$this->className.{$w['col']}", explode(' ', $w['val'])[0], explode(' ', $w['val'])[1])); break;
-					case 'LIKE': $table->where($table->expr()->like("$this->className.{$w['col']}", "?$i"))->setParameter($i++, "%{$w['val']}%"); break;
-					case 'IN': $table->where($table->expr()->in("$this->className.{$w['col']}",  explode(';', $w['val']))); break;
-					case 'NOT IN': $table->where($table->expr()->notIn("$this->className.{$w['col']}",  explode(';', $w['val']))); break;
-					case 'IS NULL': $table->where($table->expr()->isNull("$this->className.{$w['col']}")); break;
-					case 'IS NOT NULL': $table->where($table->expr()->isNotNull("$this->className.{$w['col']}")); break;
-					default: $table->where("$this->className.{$w['col']} {$w['mod']} ?$i")->setParameter($i++, $w['val']); break;
+				switch ($w['mod']) {
+					case 'IS NULL': $table->andWhere($table->expr()->isNull("$this->className.$joinTableColumn")); break;
+					case 'IS NOT NULL': $table->andWhere($table->expr()->isNotNull("$this->className.$joinTableColumn")); break;
+					default: $table->andWhere("$this->className.$joinTableColumn {$w['mod']} ?$i")->setParameter($i++, in_array($w['mod'], ['LIKE', 'NOT LIKE']) ? "%{$w['val']}%" : $w['val']); break;
 				}
 			}
 		}
-		if (!empty($order)) foreach ($order as $o) $table->orderBy($o['col'] . ' ' . $o['mod']);
+		if (!empty($order)) foreach ($order as $o) {
+			$joinTable = mb_strpos($o, '-') === 0 ? explode('.', mb_substr($o, 1)) : explode('.', $o);
+			$joinTableColumn = $joinTable[1];
+			$joinTable = $joinTable[0];
+			$joinTableSanitized = implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $joinTable)));
+			if ($joinTableSanitized !== $this->className) {
+				$table->leftJoin("$this->className.$joinTable", $joinTableSanitized);
+				$table->addOrderBy($joinTableSanitized . '.' . mb_substr($o, mb_strpos($o, '.') + 1), mb_strpos($o, '-') === 0 ? 'DESC' : 'ASC');
+			} else {
+				$table->addOrderBy($this->className . '.' . mb_substr($o, mb_strpos($o, '.') + 1), mb_strpos($o, '-') === 0 ? 'DESC' : 'ASC');
+			}
+		}
 		if (!empty($limit)) $table->setMaxResults($limit['lim'])->setFirstResult($limit['off']);
 		return $table->getQuery()->getResult();
 	}
 
-	public function getPages(array $where, array $limit) {
+	/**
+	 * Return count of pages needed for show table rows
+	 * @param array $where
+	 * @param array $limit
+	 * @return integer
+	 */
+	public function getPages(array $where = NULL, array $limit = NULL) {
 		$table = $this->dataAccessObject->createQueryBuilder()->select("COUNT($this->className)")->from($this->fullClassName, $this->className);
 		$i = 0;
 		if (!empty($where)) foreach ($where as $w) if ($w['val'] !== '') {
-			if (count($joinTable = explode('.', $w['col'])) === 2) {
-				$column = $joinTable[1];
-				$table->leftJoin("$this->className.$joinTable[0]", $joinTable = (implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $joinTable[0])))));
+			$joinTable = explode('.', $w['col']);
+			$joinTableColumn = $joinTable[1];
+			$joinTable = $joinTable[0];
+			$joinTableSanitized = implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $joinTable)));
+			if ($joinTableSanitized !== $this->className) {
+				$table->leftJoin("$this->className.$joinTable", $joinTableSanitized);
 				switch ($w['mod']) {
-					case 'BETWEEN': $table->where($table->expr()->between("$joinTable.$column", explode(' ', $w['val'])[0], explode(' ', $w['val'])[1])); break;
-					case 'LIKE': $table->where($table->expr()->like("$joinTable.$column", "?$i"))->setParameter($i++, "%{$w['val']}%"); break;
-					case 'IN': $table->where($table->expr()->in("$joinTable.$column",  explode(';', $w['val']))); break;
-					case 'NOT IN': $table->where($table->expr()->notIn("$joinTable.$column",  explode(';', $w['val']))); break;
-					case 'IS NULL': $table->where($table->expr()->isNull("$joinTable.$column")); break;
-					case 'IS NOT NULL': $table->where($table->expr()->isNotNull("$joinTable.$column")); break;
-					default: $table->where("$joinTable.$column {$w['mod']} ?$i")->setParameter($i++, $w['val']); break;
+					case 'IS NULL': $table->andWhere($table->expr()->isNull("$joinTableSanitized.$joinTableColumn")); break;
+					case 'IS NOT NULL': $table->andWhere($table->expr()->isNotNull("$joinTableSanitized.$joinTableColumn")); break;
+					default: $table->andWhere("$joinTableSanitized.$joinTableColumn {$w['mod']} ?$i")->setParameter($i++, in_array($w['mod'], ['LIKE', 'NOT LIKE']) ? "%{$w['val']}%" : $w['val']); break;
 				}
 			} else {
-					switch ($w['mod']) {
-					case 'BETWEEN': $table->where($table->expr()->between("$this->className.{$w['col']}", explode(' ', $w['val'])[0], explode(' ', $w['val'])[1])); break;
-					case 'LIKE': $table->where($table->expr()->like("$this->className.{$w['col']}", "?$i"))->setParameter($i++, "%{$w['val']}%"); break;
-					case 'IN': $table->where($table->expr()->in("$this->className.{$w['col']}",  explode(';', $w['val']))); break;
-					case 'NOT IN': $table->where($table->expr()->notIn("$this->className.{$w['col']}",  explode(';', $w['val']))); break;
-					case 'IS NULL': $table->where($table->expr()->isNull("$this->className.{$w['col']}")); break;
-					case 'IS NOT NULL': $table->where($table->expr()->isNotNull("$this->className.{$w['col']}")); break;
-					default: $table->where("$this->className.{$w['col']} {$w['mod']} ?$i")->setParameter($i++, $w['val']); break;
+				switch ($w['mod']) {
+					case 'IS NULL': $table->andWhere($table->expr()->isNull("$this->className.$joinTableColumn")); break;
+					case 'IS NOT NULL': $table->andWhere($table->expr()->isNotNull("$this->className.$joinTableColumn")); break;
+					default: $table->andWhere("$this->className.$joinTableColumn {$w['mod']} ?$i")->setParameter($i++, in_array($w['mod'], ['LIKE', 'NOT LIKE']) ? "%{$w['val']}%" : $w['val']); break;
 				}
 			}
 		}
 		return ceil($table->getQuery()->getSingleScalarResult() / (int)$limit['lim']);
 	}
 
+	/**
+	 * Return table row
+	 * @param string $primaryKey
+	 * @return
+	 */
 	public function get($primaryKey) {
+		$classMetadata = $this->entityManager->getClassMetadata($this->fullClassName);
 		$indexes = [];
-		foreach ($this->entityManager->getClassMetadata($this->fullClassName)->table['indexes'] as $m) $indexes[] = $m['columns'][0];
+		if (isset($classMetadata->table['indexes'])) foreach ($classMetadata->table['indexes'] as $m) $indexes[] = $m['columns'][0];
 		$row = $this->objectToArray($this->dataAccessObject->find($primaryKey));
 		foreach ($row as $key => $value) {
 			if ($value instanceof \DateTime) {
@@ -116,10 +141,16 @@ class BaseRepository extends \Nette\Object {
 		return $array;
 	}
 
+	/**
+	 * Save table row
+	 * @param type $primaryKey
+	 * @param type $values
+	 * @return
+	 */
 	public function save($primaryKey, array $values) {
 		$classMetadata = $this->entityManager->getClassMetadata($this->fullClassName);
 		$indexes = [];
-		foreach ($classMetadata->table['indexes'] as $m) $indexes[] = $m['columns'][0];	
+		if (isset($classMetadata->table['indexes'])) foreach ($classMetadata->table['indexes'] as $m) $indexes[] = $m['columns'][0];	
 		$entity = ($primaryKey = $primaryKey ?: FALSE) ? $this->dataAccessObject->find($primaryKey) : new $this->fullClassName();
 		foreach ($values as $key => $value) {
 			if ($value === '') continue;
@@ -145,6 +176,11 @@ class BaseRepository extends \Nette\Object {
 		return $entity;
 	}
 
+	/**
+	 * Remove table row
+	 * @param string $primaryKey
+	 * @return
+	 */
 	public function remove($primaryKey) {
 		try {
 			$this->dataAccessObject->delete($this->dataAccessObject->find($primaryKey));

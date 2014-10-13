@@ -2,14 +2,14 @@
 /**
  * Store table column type information
  * @author Radek Brůha
- * @version 1.1
+ * @version 1.0
  */
 class Type {
 	public $name;
 	public $length;
 	public $extra;
 
-	function __construct($name = FALSE, $length = FALSE, $extra = FALSE) {
+	function __construct($name = NULL, $length = NULL, $extra = NULL) {
 		$this->name = $name;
 		$this->length = $length;
 		$this->extra = $extra;

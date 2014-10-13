@@ -4,7 +4,7 @@
  * @author Radek Brůha
  * @version 1.0
  */
-class Base {
+abstract class BaseBuilder {
 	protected $projectPath = '\..\..\..\..\app';
 	protected $sourcePath;
 	protected $destinationPath;

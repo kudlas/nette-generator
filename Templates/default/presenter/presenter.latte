@@ -2,7 +2,19 @@
 use	\Nette\Application\UI\Form;
 
 class {{$presenterName}}Presenter extends BasePresenter {
-	{{$changeForm|noescape}}
+	/** @var \App{{$moduleName}}\Models\{{$presenterName}}Repository @inject */
+	public $repository;
+	{{foreach $tables as $t}}
+	/** @var \App{{$moduleName}}\Models\{{$t->sanitizedName}}Repository @inject */
+	public ${{lcfirst($t->sanitizedName)}}Repository;
+	{{/foreach}}
+
+	public function startup() {
+		parent::startup();
+		$this->columns = {{$columns|noescape}};
+	}
+
+	{{$changeTableForm|noescape}}
 	
-	{{$controlForm|noescape}}
+	{{$changeSelectForm|noescape}}
 }

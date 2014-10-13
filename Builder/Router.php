@@ -4,7 +4,7 @@
  * @author Radek Brůha
  * @version 1.0
  */
-class Router extends Base {
+class Router extends BaseBuilder {
 	/**
 	 * Build and save router
 	 * @param array of \Utils\Object\Table $tables

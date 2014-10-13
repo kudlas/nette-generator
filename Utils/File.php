@@ -14,15 +14,10 @@ class File {
 	 * @static
 	 */
 	public static function read($source) {
-		if (file_exists($source)) {
-			if ($file = fopen($source, 'r')) {
-				if ($content = fread($file, filesize($source))) {
-					if (fclose($file)) {
-						return $content;
-					} else throw new \FileException("Cannot close file $source.");
-				} else throw new \FileException("Cannot read file $source.");
-			} else throw new \FileException("Cannot open file $source.");
-		} else throw new \FileException("Cannot find file $source.");
+		if (is_file($source)) {
+			if (($content = file_get_contents($source)) === FALSE) throw new \FileException("Cannot read file $source.");
+			return $content;
+		} else throw new \FileException("Cannot read file $source.");
 	}
 
 	/**
@@ -32,12 +27,12 @@ class File {
 	 * @throws \FileException
 	 * @static
 	 */
-	public static function write($destination, $content, $rewrite = TRUE) {
-		if (!$rewrite) if (is_file($destination)) return;
+	public static function write($destination, $content, $rewrite = TRUE, $neon = FALSE) {
+		if (!$rewrite) return;
 		if (!is_dir(dirname($destination))) if (!mkdir(dirname($destination), 0777, TRUE)) throw new \FileException("Cannot create path $destination.");
-		if (!file_put_contents($destination, $content)) throw new \FileException("Cannot write file $destination.");
+		if (!file_put_contents($destination, $neon ? str_replace('()', '', \Nette\Neon\Neon::encode($content, \Nette\Neon\Encoder::BLOCK)) : $content)) throw new \FileException("Cannot write file $destination.");
 	}
-
+	
 	/**
 	 * Copy all files and directories within directory to another directory
 	 * @param string $source Source directory path

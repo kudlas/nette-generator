@@ -4,7 +4,7 @@
  * @author Radek Brůha
  * @version 1.0
  */
-class BasePresenter extends Base {
+class BasePresenter extends BaseBuilder {
 	/**
 	 * Build and save base presenter
 	 * @param \stdClass $settings
