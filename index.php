@@ -1,36 +1,28 @@
-<?php require __DIR__ . '\Generator.php';
+<?php require __DIR__ . '\src\Generator.php';
 if (!function_exists('dump')) {
-	/**
-	 * Tracy\Debugger::dump() shortcut.
-	 * @tracySkipLocation
-	 */
-	function dump($var)
-	{
-		foreach (func_get_args() as $arg) {
-			Tracy\Debugger::dump($arg);
-		}
+	/** @tracySkipLocation */
+	function dump($var) {
+		foreach (func_get_args() as $arg) Tracy\Debugger::dump($arg);
 		return $var;
 	}
 }
-
 if (!function_exists('barDump')) {
-	/**
-	 * Tracy\Debugger::barDump() shortcut.
-	 * @tracySkipLocation
-	 */
+	/** @tracySkipLocation */
 	function barDump($var, $title = NULL, array $options = NULL) {
 		Tracy\Debugger::barDump($var, $title, $options);
 	}
 }
-
 if (!function_exists('ajaxDump')) {
-	/**
-	 * \Tracy\FireLogger::log shortcut.
-	 * @tracySkipLocation
-	 */
+	/** @tracySkipLocation */
 	function ajaxDump($var) {
-		\Tracy\FireLogger::log($var);
+		Tracy\FireLogger::log($var);
 	}
 }
 
+if (!function_exists('timerDump')) {
+	/** @tracySkipLocation */
+	function timerDump($var = NULL, $title = NULL, $options = []) {
+		Tracy\Debugger::barDump(Tracy\Debugger::timer($var), $title, $options);
+	}
+}
 (new \Bruha\Generator\Generator)->run();
