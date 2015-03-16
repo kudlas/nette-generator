@@ -271,4 +271,170 @@ If you want to know what exatly you will get into your [Latte](https://github.co
 - **src\Examiner\MysqlExaminer** and watch code how I am handling MySQL database
 - all files in **src\Utils\Object** which are used by MysqlExaminer above
 
-**There will be some digest once...**
+**There will be some digest once... (when I finish it) :)**
+
+You will get these variables in every [Latte](https://github.com/nette/latte) template.
+
+**4. 1. string netteRoot**
+
+Absolute path to Nette root directory.
+
+**4. 2. array netteConfig**
+
+Content of Nette main configuration file **config.neon** as array decoded by [Nette\Neon](https://github.com/nette/neon) decoder.
+
+**4. 3. stdClass netteDatabase**
+
+Database connection from [Nette\DI](https://github.com/nette/di).
+
+```php
+netteDatabase => stdClass
+   hostname => ""
+   username => ""
+   password => ""
+   database => "" 
+```
+
+**4. 4. integer source**
+
+Data source for generator.
+
+```php
+const SOURCE_MYSQL_DISCOVERED = 1,
+      SOURCE_MYSQL_CONVENTIONAL = 2,
+      SOURCE_DOCTRINE2 = 3;
+```
+
+**4. 5. array tables**
+
+You will get array of **\Bruha\Generator\Utils\Object\Table** objects, which represents database table.
+
+```php
+class Table {
+	public $name;
+	public $sanitizedName;
+	public $comment;
+	public $columns;
+	public $state;
+
+	public function __construct($name = NULL, $comment = NULL, array $colums = [], $state = NULL) {
+		$this->name = $name;
+		$this->sanitizedName = implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $name)));
+		$this->comment = $comment;
+		$this->columns = $colums;
+		$this->state = $state;
+	}
+}
+```
+
+Each tables have columns, so you will get them as array of **\Bruha\Generator\Utils\Object\Column** objects, which represents table column.
+
+```php
+class Column {
+	public $name;
+	public $sanitizedName;
+	public $type;
+	public $nullable;
+	public $keys;
+	public $default;
+	public $extra;
+	public $comment;
+
+	public function __construct($name = NULL, \Bruha\Generator\Utils\Object\Type $type = NULL, $nullable = NULL, array $keys = [], $default = NULL, $extra = NULL, $comment = NULL) {
+		$this->name = $name;
+		$this->sanitizedName = implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $name)));
+		$this->type = $type;
+		$this->nullable = $nullable;
+		$this->keys = $keys;
+		$this->default = $default;
+		$this->extra = $extra;
+		$this->comment = $comment;
+	}
+}
+```
+
+Each column must have type, so you will get it as **\Bruha\Generator\Utils\Object\Type** type, which represents column type.
+
+```php
+class Type {
+	public $name;
+	public $length;
+	public $extra;
+
+	function __construct($name = NULL, $length = NULL, $extra = NULL) {
+		$this->name = $name;
+		$this->length = $length;
+		$this->extra = $extra;
+	}
+}
+```
+
+Database keys are also very important so you will get them as array of **\Bruha\Generator\Utils\Object\Key** objects.
+
+```php
+class PrimaryKey {
+	
+}
+
+class IndexKey {
+	
+}
+
+class UniqueKey {
+	
+}
+
+class ForeignKey {
+	public $table;
+	public $key;
+	public $value;
+
+	function __construct(\Bruha\Generator\Utils\Object\Table $table = NULL, $key = NULL, $value = NULL) {
+		$this->table = $table;
+		$this->key = $key;
+		$this->value = $value;
+	}
+}
+```
+
+Each **\Bruha\Generator\Utils\Object\Key\ForeignKey** object stores reference to **\Bruha\Generator\Utils\Object\Table** for easy access to everything what you could need from refferenced table. Also there is $key property which is name of referenced column in referenced table and $value property which is name of column in referenced table which should be the best for showing instead of $key column.
+
+**4. 6. \Bruha\Generator\Utils\Object\Table table**
+
+You will get **\Bruha\Generator\Utils\Object\Table** object, which represents current table in templates which are processed for each table or FALSE for rest templates. (see **2. 2. 6** chapter).
+
+**4. 7. integer target**
+
+Type of generated models.
+
+```php
+const TARGET_NETTE_DATABASE = 1,
+      TARGET_DOCTRINE2 = 2;
+```
+
+**4. 8. integer foreignKeys**
+
+How to handle foreign keys.
+
+```php
+const FOREIGN_KEYS_TABLE = 1,
+      FOREIGN_KEYS_SELECT = 2
+```
+
+**4. 9. string module**
+
+Stores module name or empty string if no module was choosed.
+
+**4. 10. string template**
+
+Absolute path to choosed template directory.
+
+**4. 11. Kdyby\Doctrine\EntityManager entityManager**
+
+Kdyby\Doctrine\EntityManager object only if user choosed generating from Doctrine2 entities.
+
+
+
+
+
+

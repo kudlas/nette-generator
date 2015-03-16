@@ -20,7 +20,7 @@ Nette CRUD generator allows you create Nette Framework 2.2.X based application f
 - That's it let generator build your application
   
 ##Usage
-- Create new Nette Framework 2.2 project using Composer: `composer create-project nette/sandbox my-project`
+- Create new Nette Framework 2.2 project using Composer: `composer create-project nette/sandbox my-project 2.2`
 - Move to project: `cd my-project`
 - Add latest Nette Framework Generator using Composer: `composer require r-bruha/nette-generator @dev`
 - Add latest [Kdyby\Replicator](https://github.com/Kdyby/Replicator) using Composer: `composer require kdyby/forms-replicator 1.2.*@dev`

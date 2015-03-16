@@ -4,7 +4,7 @@
  * All is allowed by default. If you want to customize them use @see link for instructions.
  * WARNING:	If you disable ADD permission to UNSAFE RESOURCE you will no longer be able to insert any data to column owner table!
  * UNSAFE RESOURCE: Is any table column which have no default value and cannot be NULL.
- * @see http://doc.nette.org/en/2.2/access-control#toc-permission-acl */
+ * @see http://doc.nette.org/en/2.3/access-control#toc-permission-acl */
 class Permissions {
 	public function getPermissions() {
 		$acls = new \Nette\Security\Permission;
@@ -16,7 +16,6 @@ class Permissions {
 		{{/foreach}}
 		{{/foreach}}	
 		$acls->allow(['guest'], $acls::ALL, ['list', 'add', 'edit', 'delete']);
-		//$acls->deny('guest', ['articleViews', 'articleCreateDate', 'articleUpdateDate'], ['add', 'edit']);
 		return $acls;
 	}
 }

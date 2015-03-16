@@ -33,7 +33,7 @@ $(document).ready(function() {
 		sideBySide: false,
 		daysOfWeekDisabled: []
 	};
-
+	$(":file").filestyle({ buttonName: 'btn-primary', buttonBefore: true });
 	$('.input-group.date.date-full').datetimepicker();
 	$('.input-group.date.date-only').datetimepicker({pickTime: false});
 	$('.input-group.date.time-only').datetimepicker({pickDate: false});

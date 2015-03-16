@@ -153,7 +153,8 @@ abstract class BaseRepository extends \Nette\Object {
 		if (isset($classMetadata->table['indexes'])) foreach ($classMetadata->table['indexes'] as $m) $indexes[] = $m['columns'][0];	
 		$entity = ($primaryKey = $primaryKey ?: FALSE) ? $this->dataAccessObject->find($primaryKey) : new $this->fullClassName();
 		foreach ($values as $key => $value) {
-			if ($value === '') $value = NULL;
+			if ($value === 'NULL') $values[$key] = $value = NULL;
+			if ($value instanceof \Nette\Http\FileUpload && $value->temporaryFile !== NULL) $values[$key] = $value = file_get_contents($value->temporaryFile);
 			$column = array_slice(array_filter($indexes, function($value) use ($key) { return mb_strpos($value, $key) !== FALSE; }), 0, 1);
 			if (!empty($column)) {
 				$key = str_replace('_id', '', $key);

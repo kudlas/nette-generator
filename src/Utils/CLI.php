@@ -5,7 +5,6 @@
  * @version 1.0
  */
 class CLI {
-
 	/**
 	 * Read content from CLI
 	 * @param bool $asInt

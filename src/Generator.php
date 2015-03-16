@@ -19,7 +19,7 @@ class Generator {
 			define('STDIN', fopen('php://stdin', 'r'));
 			echo '<pre>';
 		}
-		CLI::write('Welcome to the Nette Framework CRUD generator 1.0@beta4.', 0, FALSE);
+		CLI::write('Welcome to the Nette Framework CRUD generator 1.0@beta5.', 0, FALSE);
 		static::$settings = (object)[
 				'netteRoot' => realpath(static::$netteDirectory . '/..'),
 				'netteConfig' => FALSE,
@@ -234,6 +234,9 @@ class Generator {
 	 * @return \stdClass Connection parameters
 	 */
 	private function getDatabaseConnectionParameters($netteContainer) {
+		$config = \Nette\Neon\Neon::decode(\Bruha\Generator\Utils\File::read(static::$settings->netteRoot . '/app/config/config.local.neon'));
+		unset($config['nette']['database']);
+		\Nette\Utils\FileSystem::write(static::$settings->netteRoot . '/app/config/config.local.neon', preg_replace('~(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+~', "\n", (new \Nette\Neon\Encoder)->encode($config, \Nette\Neon\Encoder::BLOCK)));
 		try {
 			$databaseConnection = $netteContainer->getByType('\Nette\Database\Connection');
 			$databaseConnection->connect();
@@ -299,10 +302,10 @@ class Generator {
 		}
 		$database = end(static::$databaseConfigs);
 		$config = \Nette\Neon\Neon::decode(\Bruha\Generator\Utils\File::read(static::$settings->netteRoot . '/app/config/config.neon'));
-		$config['nette']['database']['default']['dsn'] = "mysql:host=$database->hostname;dbname=$database->database";
-		$config['nette']['database']['default']['user'] = $database->username;
-		$config['nette']['database']['default']['password'] = $database->password;
-		$config['nette']['database']['default']['reflection'] = 'discovered';
+		$config['nette']['database']['dsn'] = "mysql:host=$database->hostname;dbname=$database->database";
+		$config['nette']['database']['user'] = $database->username;
+		$config['nette']['database']['password'] = $database->password;
+		$config['nette']['database']['reflection'] = 'discovered';
 		$config['doctrine']['host'] = $database->hostname;
 		$config['doctrine']['user'] = $database->username;
 		$config['doctrine']['password'] = $database->password;
@@ -341,17 +344,18 @@ class Generator {
 		} catch (\Doctrine\ORM\Tools\ToolsException $e) {
 			preg_match("~'(.*)'~", $e->getPrevious()->getPrevious()->getPrevious()->getMessage(), $table);
 			if ($e->getPrevious()->getPrevious()->getPrevious()->errorInfo[1] !== 1050) throw $e->getPrevious()->getPrevious()->getPrevious();
-			$this->buildFromEntities(array_merge($usedEntities, [implode('', array_map(function($value) {
-							return ucfirst($value);
-						}, explode('_', $table[1]))) . '.php']));
+			$this->buildFromEntities(array_merge($usedEntities, [implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $table[1]))) . '.php']));
 		}
 	}
 
 	/** Check Nette extensions configuration */
 	public function checkExtensionsConfiguration() {
 		$newInstall = FALSE;
-		CLI::write('Verifying extensions configuration:', 1);
+		CLI::write('Verifying extensions configuration:', 1, TRUE, TRUE, TRUE);
 		$config = (new \Nette\Neon\Decoder())->decode(\Bruha\Generator\Utils\File::read(static::$settings->netteRoot . '/app/config/config.neon'));
+		if (isset($config['nette'])) { // Nette ~2.2.*
+			$config['nette']['session']['autoStart'] = TRUE;
+		} else $config['session']['autoStart'] = TRUE;
 		CLI::write('Kdyby\Translation:', 2, TRUE, FALSE);
 		if (!isset($config['extensions']['translation'])) {
 			$config['extensions']['translation'] = 'Kdyby\Translation\DI\TranslationExtension';
