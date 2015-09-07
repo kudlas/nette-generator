@@ -27,7 +27,7 @@ All template directories are created (without content) in application directory 
 
 **2. 1. 1. Directories starting with Module handling**
 
-**2. 1. 1. 1. User choosed Example module**
+**2. 1. 1. 1. User chose Example module**
 
 In this case string **Module** will be replaced with real module name before creating directory in application directory.
 
@@ -36,7 +36,7 @@ Template path | Application path |
 /app/**Module**/presenters | /app/**ExampleModule**/presenters
 /app/**Module**/models/**Module**/repositories | /app/**ExampleModule**/models/**ExampleModule**/repositories
 
-**2. 1. 1. 2. User choosed no module**
+**2. 1. 1. 2. User chose no module**
 
 In this case string **Module** will be removed from path before creating directory in application directory.
 
@@ -47,7 +47,7 @@ Template path | Application path |
 
 **2. 1. 2. Directories starting with NDBT handling**
 
-**2. 1. 2. 1. User choosed [Nette\Database](https://github.com/nette/database) models**
+**2. 1. 2. 1. User chose [Nette\Database](https://github.com/nette/database) models**
 
 In this case string **NDBT** will be removed from path before creating directory in application directory.
 
@@ -56,7 +56,7 @@ Template path | Application path |
 /app/models/**NDBT**/repositories | /app/models/repositories
 /app/**NDBTmodels**/repositories | /app/models/repositories
 
-**2. 1. 2. 2. User choosed [Doctrine2](https://github.com/doctrine/doctrine2) models**
+**2. 1. 2. 2. User chose [Doctrine2](https://github.com/doctrine/doctrine2) models**
 
 In this case directory and all it's subdirectories will be skipped.
 
@@ -67,7 +67,7 @@ Template path | Application path |
 
 **2. 1. 3. Directories starting with D2 handling**
 
-**2. 1. 3. 1. User choosed [Doctrine2](https://github.com/doctrine/doctrine2) models**
+**2. 1. 3. 1. User chose [Doctrine2](https://github.com/doctrine/doctrine2) models**
 
 In this case string **D2** will be removed from path before creating directory in application directory.
 
@@ -76,7 +76,7 @@ Template path | Application path |
 /app/models/**D2**/repositories | /app/models/repositories
 /app/**D2models**/repositories | /app/models/repositories
 
-**2. 1. 3. 2. User choosed [Nette\Database](https://github.com/nette/database) models**
+**2. 1. 3. 2. User chose [Nette\Database](https://github.com/nette/database) models**
 
 In this case directory and all it's subdirectories will be skipped.
 
@@ -122,7 +122,7 @@ Template path | Application path |
 
 **2. 2. 3. Files starting with Module handling**
 
-**2. 2. 3. 1. User choosed Example module**
+**2. 2. 3. 1. User chose Example module**
 
 In this case string **Module** will be replaced with real module name before creating file in application directory.
 
@@ -130,7 +130,7 @@ Template path | Application path |
 --------------|------------------|
 /app/presenters/**ModuleBasePresenter.php.latte** | /app/presenters/**ExampleModuleBasePresenter.php**
 
-**2. 2. 3. 2. User choosed no module**
+**2. 2. 3. 2. User chose no module**
 
 In this case string **Module** will be removed from path before creating file in application directory.
 
@@ -140,7 +140,7 @@ Template path | Application path |
 
 **2. 2. 4. Files starting with NDBT handling**
 
-**2. 2. 4. 1. User choosed [Nette\Database](https://github.com/nette/database) models**
+**2. 2. 4. 1. User chose [Nette\Database](https://github.com/nette/database) models**
 
 In this case string **NDBT** will be removed from path before creating file in application directory.
 
@@ -148,7 +148,7 @@ Template path | Application path |
 --------------|------------------|
 /app/models/**NDBTBaseRepository.php.latte** | /app/models/**BaseRepository.php**
 
-**2. 2. 4. 2. User choosed [Doctrine2](https://github.com/doctrine/doctrine2) models**
+**2. 2. 4. 2. User chose [Doctrine2](https://github.com/doctrine/doctrine2) models**
 
 In this case file will be skipped.
 
@@ -159,7 +159,7 @@ Template path | Application path |
 
 **2. 2. 5. Files starting with D2 handling**
 
-**2. 2. 5. 1. User choosed [Doctrine2](https://github.com/doctrine/doctrine2) models**
+**2. 2. 5. 1. User chose [Doctrine2](https://github.com/doctrine/doctrine2) models**
 
 In this case string **D2** will be removed from path before creating file in application directory.
 
@@ -167,7 +167,7 @@ Template path | Application path |
 --------------|------------------|
 /app/models/**D2BaseRepository.php.latte** | /app/models/**BaseRepository.php**
 
-**2. 2. 5. 2. User choosed [Nette\Database](https://github.com/nette/database) models**
+**2. 2. 5. 2. User chose [Nette\Database](https://github.com/nette/database) models**
 
 In this case file will be skipped.
 
@@ -189,7 +189,7 @@ Template path | Application path |
 
 All previous directory and file rules can be combined, but they must be in folowed order **Module** => **NDBT/D2** => **Table** to create working templates.
 
-**3. 1. Example: User choosed no module and NDBT models**
+**3. 1. Example: User chose no module and NDBT models**
 
 Template path | Application path |
 --------------|------------------|
@@ -423,15 +423,15 @@ const FOREIGN_KEYS_TABLE = 1,
 
 **4. 9. string module**
 
-Stores module name or empty string if no module was choosed.
+Stores module name or empty string if no module was chose.
 
 **4. 10. string template**
 
-Absolute path to choosed template directory.
+Absolute path to chose template directory.
 
 **4. 11. Kdyby\Doctrine\EntityManager entityManager**
 
-Kdyby\Doctrine\EntityManager object only if user choosed generating from Doctrine2 entities.
+Kdyby\Doctrine\EntityManager object only if user chose generating from Doctrine2 entities.
 
 
 
